@@ -102,6 +102,30 @@ $(IMG): $(STAGE1_DIR)/boot.bin $(STAGE2_BIN)
 	# Stage-2 als Datei "entry.bin" auf Diskette
 	mcopy -i $(IMG) $(STAGE2_BIN) ::entry.bin
 
+
+HDD_IMG = $(IMG_DIR)/harddisk.img
+EMPTY_KERNEL = $(BUILD)/kernel.o
+
+.PHONY: harddisk
+
+# Leere kernel.o erzeugen
+$(EMPTY_KERNEL):
+	mkdir -p $(BUILD)
+	touch $(EMPTY_KERNEL)
+
+# Harddisk-Image erzeugen
+harddisk: $(EMPTY_KERNEL)
+	mkdir -p $(IMG_DIR)
+
+	# 10 MB leeres HDD-Image
+	dd if=/dev/zero of=$(HDD_IMG) bs=1M count=10
+
+	# FAT16 oder FAT32 möglich – hier FAT16
+	mkfs.fat -F 16 $(HDD_IMG)
+
+	# kernel.o in Root Directory der Festplatte ablegen
+	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::kernel.o
+
 # ===========================
 #  Reinigung
 # ===========================

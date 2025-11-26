@@ -1,4 +1,4 @@
-#include "../x86/x86.h"
+
 #include "../stdint/stdint.h"
 #include <stdarg.h>
 #pragma once
@@ -6,6 +6,8 @@
 #define VRAM 0xB8000
 
 #define CHAR_COLOR_WHITE 0x0F
+
+void clear();
 
 void putc(char c);
 

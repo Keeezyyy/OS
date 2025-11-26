@@ -1,7 +1,7 @@
 ENTRY(stage2_start)
 
 SECTIONS {
-    . = 0x9200;
+    . = 0x8800;
 
     .text : {
         *(.text.stage2_init)   /* <-- dein entry.asm */

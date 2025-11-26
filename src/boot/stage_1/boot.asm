@@ -134,7 +134,7 @@ _calc_data_start:
     mov cx, [FATEntryNum]
     mov ax, cx
    
-    mov ax, 0x9000
+    mov ax, 0x8600
     mov [copyTo], ax
 
     mov ax, cx
@@ -159,7 +159,7 @@ _calc_data_start:
     jbe .readLoop
 
 
-    jmp 0x0000:0x9200
+    jmp 0x0000:0x8800
 
 ;bx entry pointer
 ;cx offset

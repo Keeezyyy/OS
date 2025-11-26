@@ -18,6 +18,12 @@ void putc(char c)
     pos += 2;
 }
 
+void clear(){
+    memset((void *)0xB8000, 0, 80 * 25);
+
+    pos = 0;
+}
+
 void putByte(const unsigned char val)
 {
     unsigned char high = (val >> 4) & 0x0F;
@@ -69,6 +75,10 @@ void printf(const char *str, ...)
             case 's':{
                 char* s = va_arg(ap, char*);
                 putS(s);
+            }
+            case 'c':{
+                char c = va_arg(ap, char);
+                putc(c);
             }
             break;
 

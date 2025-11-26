@@ -1,9 +1,11 @@
 [BITS 16]
 
 extern stage2_main
-
+extern printf
 section .text.stage2_init
 global stage2_start
+
+
 
 stage2_start:
     cli               
@@ -34,10 +36,14 @@ protected_mode_entry:
 
     call stage2_main
 
-.halt:
+
+global halt
+halt:
+    push halt_msg
+    call printf
     cli
     hlt
-    jmp .halt
+    jmp halt
 
 gdt_start:
     dq 0x0000000000000000   
@@ -51,6 +57,8 @@ gdt_descriptor:
     dw gdt_end - gdt_start - 1
     dd gdt_start
 
+halt_msg:
+    db "CPU Halted", 0
 
 
 section .bss

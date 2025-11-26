@@ -1,19 +1,20 @@
-#include "x86/x86.h"
+
 #include "stdio/stdio.h"
+#include "x86/x86.h"
+#include "disk/disk.h"
+
+uint8_t x[10];
 
 void stage2_main()
 {
-    memset((void *)0xB8000, 0, 80 * 25);
-    const char *x = "helloworld\0";
-
-
+    clear();
+    printf("hello www\n");
     
-
-    //putc('x');
-
-    uint32_t count = 0;
+    read(x, 0, 1);
+    
+    printf("reading done\n");
     while (1)
     {
-        printf("count : 0x%x\n\0", count);
+
     }
 }

@@ -1,8 +1,9 @@
-#ifndef X86_H
-#define X86_H
+#pragma once
+#include "../stdint/stdint.h"
 
-extern void interrupt_Bios_Out_Char(char c, int pos) __attribute__((cdecl));
+extern void halt();
 
-void x86_outChar(char c, int pos);
+extern uint8_t read_io_byte(uint32_t ADDRESS);
 
-#endif
+
+extern void write_io_byte(uint32_t ADDRESS, uint8_t VAL);
