@@ -1,54 +1,73 @@
 #include "./disk.h"
 
-bool read(uint16_t *buffer_adr, uint64_t LBA, uint16_t sectorCount)
+bool disk_read(uint16_t *buffer_adr, uint64_t LBA, uint32_t byteCount)
 {
-    uint8_t DiskState = read_io_byte(STATUS_COMMAND);
-    // if (DiskState & 0b10000000 || !(DiskState & 0b00100000))
-    //     return false;
 
-    write_io_byte(SECTOR_COUNT, sectorCount);
+    printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x%x  \n", buffer_adr, LBA, byteCount);
 
-    write_io_byte(LBA_LOW, LBA & 0xFF);
-    write_io_byte(LBA_MID, (LBA >> 8) & 0xFF);
-    write_io_byte(LBA_HIGH, (LBA >> 16) & 0xFF);
-    write_io_byte(DRIVE_HEAD, 0b11100000 | ((LBA >> 24) & 0b00011111));
+    uint8_t LBA1 = (LBA >> 0) & 0xFF;
+    uint8_t LBA2 = (LBA >> 8) & 0xFF;
+    uint8_t LBA3 = (LBA >> 16) & 0xFF;
+    uint8_t LBA4 = (LBA >> 24) & 0xFF;
+    uint8_t LBA5 = (LBA >> 32) & 0xFF;
+    uint8_t LBA6 = (LBA >> 40) & 0xFF;
 
-    write_io_byte(STATUS_COMMAND, DISK_COMMAND_READ_SECTOR);
+    uint16_t sectors = (byteCount + 511) / 512;
 
-    while (read_io_byte(STATUS_COMMAND) & 0b10000000 == 0)
+    // 1. Master + LBA-Bit
+    write_io_byte(DRIVE_HEAD, 0x40);
+
+    // 2. High-Bytes
+    write_io_byte(SECTOR_COUNT, (sectors >> 8) & 0xFF);
+    write_io_byte(LBA_LOW, (LBA >> 24) & 0xFF);  // LBA4
+    write_io_byte(LBA_MID, (LBA >> 32) & 0xFF);  // LBA5
+    write_io_byte(LBA_HIGH, (LBA >> 40) & 0xFF); // LBA6
+
+    // 3. Low-Bytes
+    write_io_byte(SECTOR_COUNT, sectors & 0xFF);
+    write_io_byte(LBA_LOW, (LBA >> 0) & 0xFF);   // LBA1
+    write_io_byte(LBA_MID, (LBA >> 8) & 0xFF);   // LBA2
+    write_io_byte(LBA_HIGH, (LBA >> 16) & 0xFF); // LBA3
+
+    // 4. Issue command
+    write_io_byte(STATUS_COMMAND, 0x24); // READ SECTOR EXT (LBA48)
+
+    // 5. Wait for DRQ
+    while (read_io_byte(STATUS_COMMAND) & 0x80)
+        ;
+
+    uint8_t status = read_io_byte(STATUS_COMMAND);
+
+    // disk reading error
+    if (!(status & 0x08))
+        return false;
+
+    // read bytes as words
+    uint16_t *adr = buffer_adr;
+    for (int i = 0; i < (uint16_t)(byteCount / 2); i++)
     {
+        *adr = read_io_word(0x1F0);
+        adr++;
     }
 
-    for (int i = 0; i < sectorCount * 256; i++)
+    // read 1 extra byte if bytw count is uneven
+    if (byteCount % 2 == 1)
     {
-        *buffer_adr = read_io_word(0x1F0);
-        buffer_adr++;
+        uint16_t word = read_io_word(0x1F0);
+
+        *((uint8_t *)buffer_adr + byteCount - 1) = word & 0xFF;
     }
+
+    while (read_io_byte(STATUS_COMMAND) & DISK_STATUS_DATA_LEFT_IN_CACHE)
+        read_io_word(0x1F0);
+    
+    disk_flush();
+    
+
     return true;
 }
 
-/*
-bool read(void *buffer_adr, uint64_t LBA, uint16_t sectorCount)
-{
-    write_io_byte(DRIVE_HEAD, 0b11100000 | ((LBA >> 24) & 0b00011111));
-    write_io_byte(SECTOR_COUNT, sectorCount);
-
-    uint8_t DiskState = read_io_byte(STATUS_COMMAND);
-
-    if (DiskState & 0b10000000 || !(DiskState & 0b00100000))
-        return false;
-
-
-    write_io_byte(LBA_LOW, LBA & 0xFF);
-    write_io_byte(LBA_MID, (LBA >> 8) & 0xFF);
-    write_io_byte(LBA_HIGH, (LBA >> 16) & 0xFF);
-
-
-    write_io_byte(STATUS_COMMAND, DISK_COMMAND_READ_SECTOR);
-
-    while (!(read_io_byte(STATUS_COMMAND) & 0b10000000) && read_io_byte(STATUS_COMMAND) & 0b00001000 && !(read_io_byte(STATUS_COMMAND) & 0b00000001))
-    {
-
-    }
-
-}*/
+void disk_flush(){
+    write_io_byte(STATUS_COMMAND, 0xE7); 
+    
+}

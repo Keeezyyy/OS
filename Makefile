@@ -118,7 +118,7 @@ harddisk: $(EMPTY_KERNEL)
 	mkdir -p $(IMG_DIR)
 
 	# 10 MB leeres HDD-Image
-	dd if=/dev/zero of=$(HDD_IMG) bs=1M count=10
+	dd if=/dev/zero of=$(HDD_IMG) bs=1M count=128
 
 	# FAT16 oder FAT32 möglich – hier FAT16
 	mkfs.fat -F 16 $(HDD_IMG)

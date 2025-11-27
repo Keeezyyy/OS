@@ -1,7 +1,6 @@
 #include "../stdio/stdio.h"
 
 uint32_t pos = 0;
-
 void putc(char c)
 {
     if (c == '\n')
@@ -18,10 +17,33 @@ void putc(char c)
     pos += 2;
 }
 
-void clear(){
+void clear()
+{
     memset((void *)0xB8000, 0, 80 * 25);
 
     pos = 0;
+}
+
+void printHexDump(void *adr, uint16_t lines)
+{
+
+    uint8_t* byteAdr = adr;
+    for (int i = 0; i < lines; i++)
+    {
+        printf("0x%x\0", (uint32_t)byteAdr);
+
+        for (int k = 0; k < 8; k++)
+        {
+            printf(" ");
+            putByte(*(byteAdr));
+            printf(" ");
+            //printf("  %b  ", *(uint8_t*)(adr));
+            byteAdr++;
+        }
+
+        printf("\n\0");
+        byteAdr++;
+    }
 }
 
 void putByte(const unsigned char val)
@@ -72,16 +94,22 @@ void printf(const char *str, ...)
                 }
             }
             break;
-            case 's':{
-                char* s = va_arg(ap, char*);
+            case 's':
+            {
+                char *s = va_arg(ap, char *);
                 putS(s);
             }
-            case 'c':{
+            case 'c':
+            {
                 char c = va_arg(ap, char);
                 putc(c);
             }
+            case 'b':
+            {
+                uint8_t c = va_arg(ap, char);
+                putByte(c);
+            }
             break;
-
 
             default:
                 break;
