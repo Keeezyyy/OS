@@ -15,4 +15,6 @@
 #define DISK_COMMAND_READ_SECTOR 0x20
 
 
-bool read(void *buffer_adr, uint64_t LBA, uint16_t sectorCount);
+extern void read_disk_asm(uint32_t LBA, uint8_t numberOfSectors, uint32_t bufferADR);
+
+bool read(uint16_t *buffer_adr, uint64_t LBA, uint16_t sectorCount);
