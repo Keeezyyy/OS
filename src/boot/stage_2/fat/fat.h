@@ -81,6 +81,7 @@ typedef struct
 
 typedef struct
 {
+    uint64_t size;
     uint32_t clusterStartNum;
 } FAT_FILE;
 
@@ -88,4 +89,8 @@ bool fat_init(FAT *f);
 
 bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *const name);
 
-bool open(void *buffer, const char *path, FAT_FILE *out);
+
+//TODO remove the alloc solution :)
+bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT);
+
+bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f);

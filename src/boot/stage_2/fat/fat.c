@@ -2,7 +2,7 @@
 
 inline uint64_t getFatStart(FAT *f)
 {
-    // return ReservedSectors * BytesPerSector
+
     return f->bootSector.reservedSectors * f->bootSector.bytesPerSector;
 }
 inline uint64_t getRootStart(FAT *f)
@@ -27,7 +27,7 @@ inline uint64_t getDataStart(FAT *f)
 
 bool fat_init(FAT *f)
 {
-    if (!disk_read((uint16_t *)(&f->bootSector), BOOTSECTOR_LBA, sizeof(FAT16_BootSector)))
+    if (!disk_read((uint16_t *)(&f->bootSector), BOOTSECTOR_LBA))
     {
         return false;
     }
@@ -36,9 +36,9 @@ bool fat_init(FAT *f)
     f->rootStartInBytes = getRootStart(f);
     f->dataStartInBytes = getDataStart(f);
 
-    // printf("Fat Start : 0x%x\n", getFatStart(f));
-    // printf("Root Start : 0x%x\n", getRootStart(f));
-    // printf("Data Start : 0x%x\n", getDataStart(f));
+    // //printf("Fat Start : 0x%x\n", getFatStart(f));
+    // //printf("Root Start : 0x%x\n", getRootStart(f));
+    // //printf("Data Start : 0x%x\n", getDataStart(f));
 
     return true;
 }
@@ -74,7 +74,7 @@ void printFatName(const char const *str)
         putc(*(str + i));
 }
 
-bool open(void *buffer, const char *path, FAT_FILE *out)
+bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT)
 {
     // setting up path
     char *p = path;
@@ -85,6 +85,8 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
     // inizilizing the FAT obj
     FAT f;
     fat_init(&f);
+
+    memcpy((void *)0x1000, &f, sizeof(FAT));
 
     // reading first root entries
     FAT_DirEntry dirEntries[16];
@@ -101,7 +103,7 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
     {
 
         uint32_t lba = (f.rootStartInBytes + 511) / 512;
-        if (!disk_read((uint16_t *)(dirEntries), lba + i, 512))
+        if (!disk_read((uint16_t *)(dirEntries), lba + i))
             return false;
 
         char *slash = strchr(p, '/');
@@ -118,18 +120,18 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
 
         if (entry.DIR_Attr != 0x0)
         {
-            // printf("file or dir fileFound in root\n");
-            // printf("fileFound in cluster num : 0x%x\n", entry.DIR_FstClusLO);
+            // //printf("file or dir fileFound in root\n");
+            // //printf("fileFound in cluster num : 0x%x\n", entry.DIR_FstClusLO);
             // printf("atribute : 0x%x\n", entry.DIR_Attr);
             p = slash + 1;
             foundDirOrFile = true;
-            if(entry.DIR_Attr != 0x10)
+            if (entry.DIR_Attr != 0x10)
                 fileFound = true;
             break;
         }
     }
 
-    if(!foundDirOrFile)
+    if (!foundDirOrFile)
         halt();
 
     bool morePath = true;
@@ -138,7 +140,6 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
 
     while (!fileFound && morePath && foundDir)
     {
-        printf("\n");
 
         char *slash = strchr(p, '/');
         if (slash != 0x0)
@@ -156,17 +157,17 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
 
         memset(&entry, 0, sizeof(FAT_DirEntry));
 
-        printf("searching in sectors in cluster: 0x%x\n", f.bootSector.sectorsPerCluster);
+        // printf("searching in sectors in cluster: 0x%x\n", f.bootSector.sectorsPerCluster);
 
         foundDir = false;
 
         for (int i = 0; i < f.bootSector.sectorsPerCluster; i++)
         {
-            uint32_t lba = (f.dataStartInBytes +(clusterNum * f.bootSector.bytesPerSector * f.bootSector.sectorsPerCluster) + 511) /
+            uint32_t lba = (f.dataStartInBytes + (clusterNum * f.bootSector.bytesPerSector * f.bootSector.sectorsPerCluster) + 511) /
                            512;
             lba += i;
 
-            if (!disk_read((uint16_t *)(dirEntries), lba, 512))
+            if (!disk_read((uint16_t *)(dirEntries), lba))
                 return false;
 
             if (fat_findFileInDir(&f, (uint8_t *)dirEntries, &entry, fileName))
@@ -184,7 +185,6 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
                 }
                 else
                 {
-
                     fileFound = true;
                 }
 
@@ -199,8 +199,11 @@ bool open(void *buffer, const char *path, FAT_FILE *out)
     if (fileFound)
     {
         out->clusterStartNum = clusterNum;
-        printf("Datei gefunden.\n");
+        out->size = entry.DIR_FileSize;
+        *out_FAT = (FAT *)0x1000;
 
+        printFatName(entry.DIR_Name);
+        printf("datei gefunden.\n");
     }
     else
     {
@@ -215,10 +218,10 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
         FAT_DirEntry *tmp_entry = (FAT_DirEntry *)(uint8_t *)(bBlock + i * 32);
         if (memcmp(tmp_entry->DIR_Name, name, 11))
         {
-            printf("Datei gefunden!!   : \"");
-            printFatName(tmp_entry->DIR_Name);
-            printf("\" \n");
-            // printHexDump(&tmp_entry, 10);
+            // printf("Datei gefunden!!   : \"");
+            // printFatName(tmp_entry->DIR_Name);
+            // printf("\" \n");
+            //  printHexDump(&tmp_entry, 10);
 
             memcpy(out, tmp_entry, 32);
 
@@ -226,4 +229,63 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
         }
     }
     return false;
+}
+uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
+{
+    uint16_t buffer[512];
+    memset(buffer, 0, sizeof(buffer));
+
+    uint32_t fatOffset = currentClusterNum * 2;
+    uint32_t sectorOffset = fatOffset / 512;
+    uint32_t offsetInSector = fatOffset % 512;
+
+    uint32_t lba = f->fatStartInBytes / f->bootSector.bytesPerSector + sectorOffset;
+
+    printf("lba: 0x%x\n", lba);
+
+    if (!disk_read(buffer, lba))
+    {
+        return 0xFFFFFFFF;
+    }
+
+    uint16_t next = *(uint8_t *)(buffer + offsetInSector / 2);
+    printf("Next cluster  : 0x%x\n", next);
+
+    if (next >= 0xFFF8)
+        return 0xFFFFFFFF;
+
+    return next;
+}
+
+bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
+{
+    uint64_t count = 0;
+
+    uint64_t clusterNum = file->clusterStartNum;
+
+    do
+    {
+                                                                                                                                        //2 * 512 ->2 reserved in fat table  
+        uint32_t lba = (f->dataStartInBytes + (clusterNum * f->bootSector.bytesPerSector * f->bootSector.sectorsPerCluster) + 511) / 512 ;
+
+        for (int i = 0; i < f->bootSector.sectorsPerCluster; i++)
+        {
+            bool worked = false;
+            for (int k = 0; k < 2; k++)
+            {
+                if (disk_read((uint16_t *)(buffer) + 256 * i, lba + i - 2 * f->bootSector.sectorsPerCluster))
+                {
+                    worked = true;
+                    break;
+                }
+            }
+            if (!worked)
+                return false;
+        }
+
+        buffer = (uint8_t *)buffer + f->bootSector.sectorsPerCluster * 512;
+
+        if (clusterNum < 0xFFF6)
+            clusterNum = getNextClusterNum(clusterNum, f);
+    } while (clusterNum < 0xFFF6 && clusterNum > 2);
 }

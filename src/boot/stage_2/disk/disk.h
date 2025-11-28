@@ -22,4 +22,4 @@ extern void read_disk_asm(uint32_t LBA, uint8_t numberOfSectors, uint32_t buffer
 
 void disk_flush();
 
-bool disk_read(uint16_t *buffer_adr, uint64_t LBA, uint32_t byteCount);
+bool disk_read(uint16_t *buffer_adr, uint64_t LBA);

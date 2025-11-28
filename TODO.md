@@ -1,0 +1,1 @@
+[ ] - fix the stage 1 bootloader for all FAT types and make it saver for larger files
