@@ -3,7 +3,7 @@
 bool disk_read(uint16_t *buffer_adr, uint64_t LBA, uint32_t byteCount)
 {
 
-    printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x%x  \n", buffer_adr, LBA, byteCount);
+   printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x%x  \n", buffer_adr, LBA, byteCount);
 
     uint8_t LBA1 = (LBA >> 0) & 0xFF;
     uint8_t LBA2 = (LBA >> 8) & 0xFF;
@@ -14,35 +14,35 @@ bool disk_read(uint16_t *buffer_adr, uint64_t LBA, uint32_t byteCount)
 
     uint16_t sectors = (byteCount + 511) / 512;
 
-    // 1. Master + LBA-Bit
+   
     write_io_byte(DRIVE_HEAD, 0x40);
 
-    // 2. High-Bytes
+   
     write_io_byte(SECTOR_COUNT, (sectors >> 8) & 0xFF);
-    write_io_byte(LBA_LOW, (LBA >> 24) & 0xFF);  // LBA4
-    write_io_byte(LBA_MID, (LBA >> 32) & 0xFF);  // LBA5
-    write_io_byte(LBA_HIGH, (LBA >> 40) & 0xFF); // LBA6
+    write_io_byte(LBA_LOW, (LBA >> 24) & 0xFF); 
+    write_io_byte(LBA_MID, (LBA >> 32) & 0xFF); 
+    write_io_byte(LBA_HIGH, (LBA >> 40) & 0xFF);
 
-    // 3. Low-Bytes
+   
     write_io_byte(SECTOR_COUNT, sectors & 0xFF);
-    write_io_byte(LBA_LOW, (LBA >> 0) & 0xFF);   // LBA1
-    write_io_byte(LBA_MID, (LBA >> 8) & 0xFF);   // LBA2
-    write_io_byte(LBA_HIGH, (LBA >> 16) & 0xFF); // LBA3
+    write_io_byte(LBA_LOW, (LBA >> 0) & 0xFF);  
+    write_io_byte(LBA_MID, (LBA >> 8) & 0xFF);  
+    write_io_byte(LBA_HIGH, (LBA >> 16) & 0xFF);
 
-    // 4. Issue command
-    write_io_byte(STATUS_COMMAND, 0x24); // READ SECTOR EXT (LBA48)
+   
+    write_io_byte(STATUS_COMMAND, 0x24);
 
-    // 5. Wait for DRQ
+   
     while (read_io_byte(STATUS_COMMAND) & 0x80)
         ;
 
     uint8_t status = read_io_byte(STATUS_COMMAND);
 
-    // disk reading error
+   
     if (!(status & 0x08))
         return false;
 
-    // read bytes as words
+   
     uint16_t *adr = buffer_adr;
     for (int i = 0; i < (uint16_t)(byteCount / 2); i++)
     {
@@ -50,7 +50,7 @@ bool disk_read(uint16_t *buffer_adr, uint64_t LBA, uint32_t byteCount)
         adr++;
     }
 
-    // read 1 extra byte if bytw count is uneven
+   
     if (byteCount % 2 == 1)
     {
         uint16_t word = read_io_word(0x1F0);

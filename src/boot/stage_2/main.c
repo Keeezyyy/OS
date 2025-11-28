@@ -6,45 +6,18 @@
 void stage2_main()
 {
     clear();
-    printf("hello www\n");
 
-    // ead_disk_asm(0, 1, (uint32_t)buffer);
+    const char* name = "/boot/bin/kernel/core/kernel.o\0";
+    //const char* name = "boot\0";
+    //const char* name = "app.o\0";
 
-    
-    // disk_read((uint16_t*)0x11000, 0x204, 0x200);
-    // disk_read((uint16_t*)0x12000, 0x204, 0x200);
+    FAT_FILE f;
 
-    // printf("finished\n");
-    // halt();
-    // return;
-    
-
-    FAT fat;
-
-    if (!fat_init(&fat))
-    {
-        printf("error inizilizing fat\n");
-        halt();
-        return;
+    if(!open((void*)0x10000, name, &f)){
+        printf("something went wrong opening the file!\n");
     }
 
-    printf("0x%x\n", fat.bootSector.reservedSectors * fat.bootSector.bytesPerSector);
-
-    // printHexDump(&fat.bootSector, 10);
-
-    // printf("0x%x\n", fat.bootSector.bytesPerSector);
-
-    FAT_DirEntry entry;
-
-    if (!fat_findFileInRoot(&fat, &entry, "kern", "o"))
-    {
-        printf("error searching for root entry in fat\n");
-        halt();
-        return;
-    }
-
-
-    printf("\nfinished reading\n");
+    printf("cluster start num : 0x%x\n", f.clusterStartNum);
 
     halt();
     while (1)

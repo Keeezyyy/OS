@@ -3,6 +3,7 @@
 #include "../disk/disk.h"
 #include "../stdio/stdio.h"
 #include "../memory/memory.h"
+#include "../string/string.h"
 
 #define BOOTSECTOR_LBA 0x0
 
@@ -54,6 +55,12 @@ typedef struct
     uint16_t fatEntry[256];
 } FAT_BLOCK;
 
+typedef struct
+{
+    char name[8];
+    char ext[3];
+} FAT_FILENAME;
+
 typedef union
 {
     FAT_DirEntry dirEntries[16];
@@ -63,13 +70,22 @@ typedef union
 typedef struct
 {
     FAT16_BootSector bootSector;
-    uint16_t fatStart;
-    uint64_t rootStart;
+    uint64_t fatStartInBytes;
+    uint64_t rootStartInBytes;
+    uint64_t dataStartInBytes;
 
     uint8_t numOfFats;
 
     BUFFER_BLOCK readBufferBlock;
 } FAT;
 
+typedef struct
+{
+    uint32_t clusterStartNum;
+} FAT_FILE;
+
 bool fat_init(FAT *f);
-bool fat_findFileInRoot(FAT *f, FAT_DirEntry *out, const char *const name, const char *const ext);
+
+bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *const name);
+
+bool open(void *buffer, const char *path, FAT_FILE *out);

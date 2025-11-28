@@ -120,11 +120,18 @@ harddisk: $(EMPTY_KERNEL)
 	# 10 MB leeres HDD-Image
 	dd if=/dev/zero of=$(HDD_IMG) bs=1M count=128
 
-	# FAT16 oder FAT32 möglich – hier FAT16
+	# FAT16 (oder FAT32) – hier FAT16
 	mkfs.fat -F 16 $(HDD_IMG)
 
-	# kernel.o in Root Directory der Festplatte ablegen
-	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::kernel.o
+	# Verzeichnisse /boot und /boot/bin im Image anlegen (falls nötig)
+	mmd -i $(HDD_IMG) ::/boot
+	mmd -i $(HDD_IMG) ::/boot/bin
+	mmd -i $(HDD_IMG) ::/boot/bin/kernel
+	mmd -i $(HDD_IMG) ::/boot/bin/kernel/core
+
+	# kernel.o nach /boot/bin/ in dem FAT-Image kopieren
+	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::/boot/bin/kernel/core/kernel.o
+	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::app.o
 
 # ===========================
 #  Reinigung
