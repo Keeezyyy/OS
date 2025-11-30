@@ -241,18 +241,28 @@ uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
 
     uint32_t lba = f->fatStartInBytes / f->bootSector.bytesPerSector + sectorOffset;
 
-    printf("lba: 0x%x\n", lba);
+    // printf("lba: 0x%x\n", lba);
 
-    if (!disk_read(buffer, lba))
+    bool worked = false;
+    for (int i = 0; i < 5; i++)
     {
-        return 0xFFFFFFFF;
+        if (disk_read(buffer, lba))
+        {
+            worked = true;
+            break;
+        }
     }
-
-    uint16_t next = *(uint8_t *)(buffer + offsetInSector / 2);
-    printf("Next cluster  : 0x%x\n", next);
-
-    if (next >= 0xFFF8)
+    if (!worked)
         return 0xFFFFFFFF;
+
+    uint16_t next = *(uint16_t *)((uint8_t *)(buffer + offsetInSector / 2));
+
+    if (next > 0x19)
+    {
+
+        printf("Next cluster  : 0x%x\n", next);
+        printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
+    }
 
     return next;
 }
@@ -265,8 +275,10 @@ bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
 
     do
     {
-                                                                                                                                        //2 * 512 ->2 reserved in fat table  
-        uint32_t lba = (f->dataStartInBytes + (clusterNum * f->bootSector.bytesPerSector * f->bootSector.sectorsPerCluster) + 511) / 512 ;
+        // 2 * 512 ->2 reserved in fat table
+        uint32_t lba = (f->dataStartInBytes + (clusterNum * f->bootSector.bytesPerSector * f->bootSector.sectorsPerCluster) + 511) / 512;
+
+        count++;
 
         for (int i = 0; i < f->bootSector.sectorsPerCluster; i++)
         {
@@ -287,5 +299,14 @@ bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
 
         if (clusterNum < 0xFFF6)
             clusterNum = getNextClusterNum(clusterNum, f);
+
+        // printf("next cluster num : 0x%x\n", clusterNum);
+
     } while (clusterNum < 0xFFF6 && clusterNum > 2);
+
+    printf("sectors copied = 0x%x\n", count);
+    printf("sould copy = 0x%x\n", file->size / f->bootSector.bytesPerSector / f->bootSector.sectorsPerCluster);
+
+    // if the num of sectors matches the amount of copied sectors
+    return file->size / f->bootSector.sectorsPerCluster / f->bootSector.bytesPerSector <= count;
 }

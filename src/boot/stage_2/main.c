@@ -24,6 +24,7 @@ void stage2_main()
 
     if (!readFile((void *)0x20000, &f, f.size, fat))
     {
+        printf("probably too few sectors copied look last return statements dumbass!\n");
         printf("something went wrong reading the file!\n");
         halt();
     }
