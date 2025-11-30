@@ -7,7 +7,7 @@ void stage2_main()
 {
     clear();
 
-    const char *name = "app.o\0";
+    const char *name = "/boot/bin/kernel/core/kernel.o\0";
     FAT_FILE f;
 
     FAT *fat;
@@ -18,13 +18,8 @@ void stage2_main()
         halt();
     }
 
-    printf("cluster start num : 0x%x\n", f.clusterStartNum);
-    printf("Size: 0x%x\n", f.size);
-    printf("BPS: 0x%x\n", fat->bootSector.bytesPerSector);
-
     if (!readFile((void *)0x20000, &f, f.size, fat))
     {
-        printf("probably too few sectors copied look last return statements dumbass!\n");
         printf("something went wrong reading the file!\n");
         halt();
     }

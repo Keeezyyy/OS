@@ -27,7 +27,7 @@ inline uint64_t getDataStart(FAT *f)
 
 bool fat_init(FAT *f)
 {
-    if (!disk_read((uint16_t *)(&f->bootSector), BOOTSECTOR_LBA))
+    if (!save_disk_read((uint16_t *)(&f->bootSector), BOOTSECTOR_LBA))
     {
         return false;
     }
@@ -103,7 +103,7 @@ bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT)
     {
 
         uint32_t lba = (f.rootStartInBytes + 511) / 512;
-        if (!disk_read((uint16_t *)(dirEntries), lba + i))
+        if (!save_disk_read((uint16_t *)(dirEntries), lba + i))
             return false;
 
         char *slash = strchr(p, '/');
@@ -167,12 +167,12 @@ bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT)
                            512;
             lba += i;
 
-            if (!disk_read((uint16_t *)(dirEntries), lba))
+            if (!save_disk_read((uint16_t *)(dirEntries), lba))
                 return false;
 
             if (fat_findFileInDir(&f, (uint8_t *)dirEntries, &entry, fileName))
             {
-
+                // printf("starts in cluster : 0x%x\n", entry.DIR_FstClusLO);
                 foundDir = true;
 
                 if (entry.DIR_Attr == 0x10)
@@ -185,6 +185,8 @@ bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT)
                 }
                 else
                 {
+                    clusterNum = entry.DIR_FstClusLO;
+                    i = 0xFFFFFF;
                     fileFound = true;
                 }
 
@@ -198,6 +200,7 @@ bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT)
 
     if (fileFound)
     {
+        printf("starts in cluster : 0x%x\n", entry.DIR_FstClusLO);
         out->clusterStartNum = clusterNum;
         out->size = entry.DIR_FileSize;
         *out_FAT = (FAT *)0x1000;
@@ -221,6 +224,7 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
             // printf("Datei gefunden!!   : \"");
             // printFatName(tmp_entry->DIR_Name);
             // printf("\" \n");
+            // printf("starts in cluster : 0x%x\n", tmp_entry->DIR_FstClusLO);
             //  printHexDump(&tmp_entry, 10);
 
             memcpy(out, tmp_entry, 32);
@@ -232,7 +236,7 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
 }
 uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
 {
-    uint16_t buffer[512];
+    uint16_t *buffer = 0x0000;
     memset(buffer, 0, sizeof(buffer));
 
     uint32_t fatOffset = currentClusterNum * 2;
@@ -241,27 +245,22 @@ uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
 
     uint32_t lba = f->fatStartInBytes / f->bootSector.bytesPerSector + sectorOffset;
 
-    // printf("lba: 0x%x\n", lba);
+    printf("lba: 0x%x\n", lba);
 
-    bool worked = false;
-    for (int i = 0; i < 5; i++)
-    {
-        if (disk_read(buffer, lba))
-        {
-            worked = true;
-            break;
-        }
-    }
-    if (!worked)
+    if (!save_disk_read(buffer, lba))
         return 0xFFFFFFFF;
+
+    printHexDump(buffer, 5);
 
     uint16_t next = *(uint16_t *)((uint8_t *)(buffer + offsetInSector / 2));
 
+    printf("Next cluster  : 0x%x\n", next);
+    printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
+    //printf("buffer   : 0x%x\n", buffer);
+    //printf("offsetInSector   : 0x%x\n", offsetInSector);
+
     if (next > 0x19)
     {
-
-        printf("Next cluster  : 0x%x\n", next);
-        printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
     }
 
     return next;
@@ -282,17 +281,11 @@ bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
 
         for (int i = 0; i < f->bootSector.sectorsPerCluster; i++)
         {
-            bool worked = false;
             for (int k = 0; k < 2; k++)
             {
-                if (disk_read((uint16_t *)(buffer) + 256 * i, lba + i - 2 * f->bootSector.sectorsPerCluster))
-                {
-                    worked = true;
-                    break;
-                }
+                if (!save_disk_read((uint16_t *)(buffer) + 256 * i, lba + i - 2 * f->bootSector.sectorsPerCluster))
+                    return false;
             }
-            if (!worked)
-                return false;
         }
 
         buffer = (uint8_t *)buffer + f->bootSector.sectorsPerCluster * 512;

@@ -3,7 +3,7 @@
 bool disk_read(uint16_t *buffer_adr, uint64_t LBA)
 {
 
-    //printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x1%x  \n", buffer_adr, LBA);
+    // printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x1%x  \n", buffer_adr, LBA);
 
     uint8_t LBA1 = (LBA >> 0) & 0xFF;
     uint8_t LBA2 = (LBA >> 8) & 0xFF;
@@ -28,7 +28,8 @@ bool disk_read(uint16_t *buffer_adr, uint64_t LBA)
 
     write_io_byte(STATUS_COMMAND, 0x24);
 
-    while (read_io_byte(STATUS_COMMAND) & 0x80);
+    while (read_io_byte(STATUS_COMMAND) & 0x80)
+        ;
 
     uint8_t status = read_io_byte(STATUS_COMMAND);
 
@@ -40,6 +41,10 @@ bool disk_read(uint16_t *buffer_adr, uint64_t LBA)
     {
         *adr = read_io_word(0x1F0);
         adr++;
+    }
+    int x = 0;
+    for(int i = 0; i<512;i++){
+        x = read_io_word(0x1F0);
     }
 
     while (read_io_byte(STATUS_COMMAND) & DISK_STATUS_DATA_LEFT_IN_CACHE)
@@ -53,4 +58,21 @@ bool disk_read(uint16_t *buffer_adr, uint64_t LBA)
 void disk_flush()
 {
     write_io_byte(STATUS_COMMAND, 0xE7);
+}
+
+bool save_disk_read(uint16_t *buffer_adr, uint64_t LBA)
+{
+    bool worked = false;
+    for (int i = 0; i < DISK_RETRY_AMOUNT; i++)
+    {
+        if(disk_read(buffer_adr, LBA)){
+            worked = true;
+            break;
+        }
+    }
+
+    if(!worked)
+        printf("!!!! disk 5 times retry error \n");
+
+    return worked;
 }

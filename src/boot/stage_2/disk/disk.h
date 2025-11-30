@@ -17,9 +17,13 @@
 
 #define DISK_STATUS_DATA_LEFT_IN_CACHE 0x08
 
+#define DISK_RETRY_AMOUNT 10
+
 
 extern void read_disk_asm(uint32_t LBA, uint8_t numberOfSectors, uint32_t bufferADR);
 
 void disk_flush();
 
 bool disk_read(uint16_t *buffer_adr, uint64_t LBA);
+
+bool save_disk_read(uint16_t *buffer_adr, uint64_t LBA);

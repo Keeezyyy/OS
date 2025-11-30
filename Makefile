@@ -131,7 +131,7 @@ harddisk: $(EMPTY_KERNEL)
 
 	# kernel.o nach /boot/bin/ in dem FAT-Image kopieren
 	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::/boot/bin/kernel/core/kernel.o
-	mcopy -i $(HDD_IMG) $(EMPTY_KERNEL) ::app.o
+	mcopy -i $(HDD_IMG) $(BUILD)/app.o ::app.o
 
 # ===========================
 #  Reinigung
