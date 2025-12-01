@@ -2,6 +2,7 @@
 
 extern stage2_main
 extern printf
+extern exit
 section .text.stage2_init
 global stage2_start
 
@@ -34,8 +35,11 @@ protected_mode_entry:
 
     mov esp, stack_top    
 
+
+    
     call stage2_main
 
+    call exit
 
 global halt
 halt:
@@ -59,6 +63,10 @@ gdt_descriptor:
 
 halt_msg:
     db "CPU Halted", 0
+
+
+final_msg:
+    db "final message, %x", 0
 
 
 section .bss

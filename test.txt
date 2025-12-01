@@ -1,0 +1,55 @@
+[BITS 32]
+section .text.stage2_exit
+
+global exit
+exit:
+;paging for long mode init
+;PML4 -> PDPT link
+    mov eax, PDPT
+    or eax, 0b11
+    mov [PML4 + 0*8], eax
+    mov dword [PML4 + 0*8 + 4], 0
+;PDPT -> PD link
+    mov eax, PD
+    or eax, 0b11           
+    mov [PDPT + 0*8], eax
+    mov dword [PDPT + 0*8 + 4], 0
+
+    mov eax, PML4            
+    mov cr3, eax
+
+; inti long mode 
+    mov eax, cr4
+    or eax, 1 << 5           
+    mov cr4, eax
+
+enable_long_mode:
+    mov ecx, 0xC0000080      
+    rdmsr
+    or eax, 1 << 8           
+    wrmsr
+
+;activae paging 
+    mov eax, cr0
+    or eax, 1 << 31          
+    mov cr0, eax
+
+;WIP set actual kernel entry
+;
+;
+    jmp 0x08:0x10    
+
+
+
+
+align 4096
+PML4:
+    times 512 dq 0
+
+align 4096
+PDPT:
+    times 512 dq 0
+
+align 4096
+PD:
+    times 512 dq 0

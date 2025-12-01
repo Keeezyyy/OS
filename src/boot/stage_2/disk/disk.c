@@ -3,7 +3,8 @@
 bool disk_read(uint16_t *buffer_adr, uint64_t LBA)
 {
 
-    // printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x1%x  \n", buffer_adr, LBA);
+    
+
 
     uint8_t LBA1 = (LBA >> 0) & 0xFF;
     uint8_t LBA2 = (LBA >> 8) & 0xFF;
@@ -62,6 +63,7 @@ void disk_flush()
 
 bool save_disk_read(uint16_t *buffer_adr, uint64_t LBA)
 {
+    //printf("buffer adr, 0x%x,    lba: 0x%x,   bytecount : 0x1%x  \n", buffer_adr, LBA);
     bool worked = false;
     for (int i = 0; i < DISK_RETRY_AMOUNT; i++)
     {

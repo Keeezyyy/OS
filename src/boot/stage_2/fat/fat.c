@@ -221,9 +221,9 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
         FAT_DirEntry *tmp_entry = (FAT_DirEntry *)(uint8_t *)(bBlock + i * 32);
         if (memcmp(tmp_entry->DIR_Name, name, 11))
         {
-            // printf("Datei gefunden!!   : \"");
-            // printFatName(tmp_entry->DIR_Name);
-            // printf("\" \n");
+             printf("Datei gefunden!!   : \"");
+             printFatName(tmp_entry->DIR_Name);
+             printf("\" \n");
             // printf("starts in cluster : 0x%x\n", tmp_entry->DIR_FstClusLO);
             //  printHexDump(&tmp_entry, 10);
 
@@ -245,17 +245,17 @@ uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
 
     uint32_t lba = f->fatStartInBytes / f->bootSector.bytesPerSector + sectorOffset;
 
-    printf("lba: 0x%x\n", lba);
+    //printf("lba: 0x%x\n", lba);
 
     if (!save_disk_read(buffer, lba))
         return 0xFFFFFFFF;
 
-    printHexDump(buffer, 5);
+    printHexDump(buffer, 2);
 
     uint16_t next = *(uint16_t *)((uint8_t *)(buffer + offsetInSector / 2));
 
     printf("Next cluster  : 0x%x\n", next);
-    printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
+    //printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
     //printf("buffer   : 0x%x\n", buffer);
     //printf("offsetInSector   : 0x%x\n", offsetInSector);
 
@@ -281,11 +281,8 @@ bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
 
         for (int i = 0; i < f->bootSector.sectorsPerCluster; i++)
         {
-            for (int k = 0; k < 2; k++)
-            {
-                if (!save_disk_read((uint16_t *)(buffer) + 256 * i, lba + i - 2 * f->bootSector.sectorsPerCluster))
+            if (!save_disk_read((uint16_t *)(buffer) + 256 * i, lba + i - 2 * f->bootSector.sectorsPerCluster))
                     return false;
-            }
         }
 
         buffer = (uint8_t *)buffer + f->bootSector.sectorsPerCluster * 512;

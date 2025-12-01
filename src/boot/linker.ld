@@ -4,8 +4,10 @@ SECTIONS {
     . = 0x8400;
 
     .text : {
-        *(.text.stage2_init)   /* <-- dein entry.asm */
-        *(.text*)              /* alle anderen danach */
+        KEEP(*(.text.stage2_init))
+        *(.text.stage2_exit)
+        *(.text)
+        *(.text.*)
     }
 
     .rodata : { *(.rodata*) }
