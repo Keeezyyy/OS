@@ -32,11 +32,7 @@ int execv(void *elfHeader)
     uint64_t kernelEntry = elf->e_entry;
     uint64_t phNum = elf->e_phnum;
 
-    printf("program header num 0x%x\n", phNum);
-    printf("program entry 0x%x\n", kernelEntry);
 
-    printf("phnum : 0x%x\n", phNum);
-    printf("ph size : 0x%x\n", sizeof(ELF_PROGRAM_HEADER));
 
     for (int i = 0; i < phNum; i++)
     {

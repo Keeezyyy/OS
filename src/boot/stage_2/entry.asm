@@ -3,12 +3,22 @@
 extern stage2_main
 extern printf
 extern exit
+
+extern detect_memory
+
 section .text.stage2_init
 global stage2_start
 
 
 
 stage2_start:
+    ;detect mmap
+
+    call detect_memory
+
+    push final_msg
+    call printf
+    
     cli               
 
     in   al, 0x92
@@ -34,13 +44,12 @@ protected_mode_entry:
     mov gs, ax
 
     mov esp, stack_top    
-
-
     
+    ;return is in EAX
     call stage2_main
 
     call exit
-
+    
 global halt
 halt:
     push halt_msg
@@ -68,6 +77,8 @@ halt_msg:
 final_msg:
     db "final message, %x", 0
 
+;TODO: make the memory loaction dynamic 
+mmap_ptr dw 0x50000
 
 section .bss
 align 16

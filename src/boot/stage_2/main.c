@@ -3,11 +3,13 @@
 #include "x86/x86.h"
 #include "fat/fat.h"
 #include "elf/elf.h"
+#include "memory/memory.h"
 
 #define KERNEL_PATH "/kernel.o\0"
+#define RAM_MAP 0x50000
+#define LOAD_RETRIES 10
 
-__attribute__((__cdecl))
-int stage2_main()
+__attribute__((__cdecl)) int stage2_main()
 {
     clear();
 
@@ -15,20 +17,31 @@ int stage2_main()
     FAT_FILE f;
     FAT *fat;
 
-    if (!open((void *)0x10000, name, &f, &fat))
+    void *fileBuffer = (void *)0x20000;
+
+    bool worked = false;
+
+    for (int i = 0; i < LOAD_RETRIES; i++)
     {
-        printf("something went wrong opening the file!\n");
-        halt();
+        if (!open((void *)0x10000, name, &f, &fat))
+        {
+            printf("e1\n");
+        }
+
+        if (readFile(fileBuffer, &f, f.size, fat))
+        {
+            worked = true;
+            break;
+        }
+        printf("e2!\n");
     }
 
-    void *fileBuffer = (void*)0x20000;
-
-    if (!readFile(fileBuffer, &f, f.size, fat))
-    {
-        printf("something went wrong reading the file!\n");
+    if (!worked)
         halt();
-    }
-    int entry = execv(fileBuffer);
 
-    return entry;
+    int entryAddress = execv(fileBuffer);
+
+    printf("entry: 0x%x\n", entryAddress);
+
+    return entryAddress;
 }

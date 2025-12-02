@@ -221,9 +221,6 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
         FAT_DirEntry *tmp_entry = (FAT_DirEntry *)(uint8_t *)(bBlock + i * 32);
         if (memcmp(tmp_entry->DIR_Name, name, 11))
         {
-             printf("Datei gefunden!!   : \"");
-             printFatName(tmp_entry->DIR_Name);
-             printf("\" \n");
             // printf("starts in cluster : 0x%x\n", tmp_entry->DIR_FstClusLO);
             //  printHexDump(&tmp_entry, 10);
 
@@ -254,7 +251,7 @@ uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
 
     uint16_t next = *(uint16_t *)((uint8_t *)(buffer + offsetInSector / 2));
 
-    printf("Next cluster  : 0x%x\n", next);
+
     //printf("Next cluster at   : 0x%x\n", (uint32_t)((uint8_t *)(buffer + offsetInSector / 2)));
     //printf("buffer   : 0x%x\n", buffer);
     //printf("offsetInSector   : 0x%x\n", offsetInSector);
@@ -293,9 +290,6 @@ bool readFile(void *buffer, FAT_FILE *file, uint32_t bytes, FAT *f)
         // printf("next cluster num : 0x%x\n", clusterNum);
 
     } while (clusterNum < 0xFFF6 && clusterNum > 2);
-
-    printf("sectors copied = 0x%x\n", count);
-    printf("sould copy = 0x%x\n", file->size / f->bootSector.bytesPerSector / f->bootSector.sectorsPerCluster);
 
     // if the num of sectors matches the amount of copied sectors
     return file->size / f->bootSector.sectorsPerCluster / f->bootSector.bytesPerSector <= count;

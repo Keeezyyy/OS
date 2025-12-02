@@ -4,6 +4,11 @@
 section .text.stage2_exit
 global exit
 exit:
+
+    mov [entry_address], eax
+
+
+    push eax
 ;paging for long mode init
 
 ;PML4 -> PDPT link
@@ -60,15 +65,15 @@ long_mode_entry:
     mov gs, ax
 
 
-;TODO read stack from kenel elf
+;TODO implement better dynamic stack detection
 ;WIP read stack from kenel elf
     mov rsp, 0x200000   
 
     ; Annahme: stage2_main hat Kernel-Entry-Adresse in RAX (oder sonst wo) gespeichert
     ; Beispiel: RAX = Kernel-Entry
-    mov rax, 0x2000
+    mov rax, [entry_address]
 final_exit:
-    jmp 0x2000
+    jmp rax
 
 
 
@@ -85,6 +90,7 @@ gdt64_descriptor:
     dw gdt64_end - gdt64_start - 1
     dd gdt64_start
 
+entry_address: dq 0
 
 
 
