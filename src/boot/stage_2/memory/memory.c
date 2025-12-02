@@ -13,7 +13,7 @@ bool memcmp(const void *lhs, const void *rhs, unsigned int count)
     return true;
 }
 
-void *memcpy(void *destination, const void *source, uint64_t num)
+void *memcpy(void *destination, const void *source, uint32_t num)
 {
     uint8_t* d= destination;
     uint8_t* s = source;

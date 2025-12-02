@@ -70,9 +70,9 @@ typedef union
 typedef struct
 {
     FAT16_BootSector bootSector;
-    uint64_t fatStartInBytes;
-    uint64_t rootStartInBytes;
-    uint64_t dataStartInBytes;
+    uint32_t fatStartInBytes;
+    uint32_t rootStartInBytes;
+    uint32_t dataStartInBytes;
 
     uint8_t numOfFats;
 
@@ -81,7 +81,7 @@ typedef struct
 
 typedef struct
 {
-    uint64_t size;
+    uint32_t size;
     uint32_t clusterStartNum;
 } FAT_FILE;
 
@@ -93,4 +93,4 @@ bool fat_findFileInDir(FAT *f, uint8_t *bBlock, FAT_DirEntry *out, const char *c
 //TODO remove the alloc solution :)
 bool open(void *buffer, const char *path, FAT_FILE *out, FAT **out_FAT);
 
-bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f);
+bool readFile(void *buffer, FAT_FILE *file, uint32_t bytes, FAT *f);

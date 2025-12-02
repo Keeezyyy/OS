@@ -4,18 +4,14 @@
 #include "fat/fat.h"
 #include "elf/elf.h"
 
-/*
-  printf("offset 0x%x\n", *(uint32_t *)((uint8_t *)elf + 0x20));
-  printf("offset 0x%x\n", *(uint16_t *)((uint8_t *)elf + 0x36));
-  printf("offset 0x%x\n", *(uint16_t *)((uint8_t *)elf + 0x38));
-*/
+#define KERNEL_PATH "/kernel.o\0"
+
 __attribute__((__cdecl))
 int stage2_main()
 {
     clear();
 
-    // const char *name = "/boot/bin/kernel/core/kernel.o\0";
-    const char *name = "/kernel.o\0";
+    const char *name = KERNEL_PATH;
     FAT_FILE f;
     FAT *fat;
 
@@ -25,33 +21,14 @@ int stage2_main()
         halt();
     }
 
-    if (!readFile((void *)0x20000, &f, f.size, fat))
+    void *fileBuffer = (void*)0x20000;
+
+    if (!readFile(fileBuffer, &f, f.size, fat))
     {
         printf("something went wrong reading the file!\n");
         halt();
     }
+    int entry = execv(fileBuffer);
 
-
-
-    //TODO make the struct parsing working
-    ELF_HEADER *elf = (ELF_HEADER *)0x20000;
-
-    uint32_t phOffset = *(uint32_t *)((uint8_t *)elf + 32);
-    uint64_t kernelEntry = *(uint64_t *)((uint8_t *)elf + 0x18);
-    
-    ELF_PROGRAM_HEADER *programHeader = (ELF_PROGRAM_HEADER *)((uint8_t *)elf + phOffset);
-    
-    uint32_t filesz = *(uint32_t *)((uint8_t *)programHeader + 0x20);
-
-
-    printf("program header num 0x%x\n", *(uint16_t *)((uint8_t *)elf + 0x38));
-    printf("program entry 0x%x\n", *(uint64_t *)((uint8_t *)elf + 0x18));
-
-    printf("filesz 0x%x\n", filesz);
-    printf("offset in file:  0x%x - 0x%x\n", programHeader->p_offset, programHeader->p_offset + filesz);
-
-    loadProgramHeader(programHeader, elf, *(uint32_t *)((uint8_t *)programHeader + 0x10), filesz, programHeader->p_offset);
-    
-
-    return kernelEntry;
+    return entry;
 }

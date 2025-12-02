@@ -1,25 +1,25 @@
 #include "./fat.h"
 
-inline uint64_t getFatStart(FAT *f)
+inline uint32_t getFatStart(FAT *f)
 {
 
     return f->bootSector.reservedSectors * f->bootSector.bytesPerSector;
 }
-inline uint64_t getRootStart(FAT *f)
+inline uint32_t getRootStart(FAT *f)
 {
     // ReservedSectors + (NumFATs * FATsize_in_sectors)
     //
     return (f->bootSector.reservedSectors + (f->bootSector.numberOfFATs * f->bootSector.sectorsPerFAT)) * f->bootSector.bytesPerSector;
 }
 
-inline uint64_t getDataStart(FAT *f)
+inline uint32_t getDataStart(FAT *f)
 {
-    uint64_t RootDirSectors =
+    uint32_t RootDirSectors =
         (f->bootSector.maxRootDirEntries * 32 + (f->bootSector.bytesPerSector - 1)) / f->bootSector.bytesPerSector;
 
-    uint64_t RootDirBytes = RootDirSectors * f->bootSector.bytesPerSector;
+    uint32_t RootDirBytes = RootDirSectors * f->bootSector.bytesPerSector;
 
-    uint64_t FATRegionBytes =
+    uint32_t FATRegionBytes =
         (f->bootSector.reservedSectors + f->bootSector.numberOfFATs * f->bootSector.sectorsPerFAT) * f->bootSector.bytesPerSector;
 
     return FATRegionBytes + RootDirBytes;
@@ -266,11 +266,11 @@ uint32_t getNextClusterNum(uint32_t currentClusterNum, FAT *f)
     return next;
 }
 
-bool readFile(void *buffer, FAT_FILE *file, uint64_t bytes, FAT *f)
+bool readFile(void *buffer, FAT_FILE *file, uint32_t bytes, FAT *f)
 {
-    uint64_t count = 0;
+    uint32_t count = 0;
 
-    uint64_t clusterNum = file->clusterStartNum;
+    uint32_t clusterNum = file->clusterStartNum;
 
     do
     {

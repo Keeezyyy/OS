@@ -3,7 +3,6 @@
 #include "../memory/memory.h"
 #include "../stdio/stdio.h"
 
-
 #pragma pack(push, 1)
 typedef struct
 {
@@ -24,17 +23,18 @@ typedef struct
 } ELF_HEADER;
 #pragma pack(pop)
 
-typedef struct __attribute__((packed))
+typedef struct 
 {
-    uint32_t p_type;    
-    uint32_t p_flags;   
-    uint64_t p_offset;  
-    uint64_t p_vaddr;   
-    uint64_t p_paddr;   
-    uint64_t p_filesz;  
-    uint64_t p_memsz;   
-    uint64_t p_align;   
-} ELF_PROGRAM_HEADER;
-
+    uint32_t p_type; 
+    uint32_t p_flags;
+    uint64_t p_offset;
+    uint64_t p_vaddr;
+    uint64_t p_paddr;
+    uint64_t p_filesz;
+    uint64_t p_memsz;
+    uint64_t p_align;
+}__attribute__((packed)) ELF_PROGRAM_HEADER;
 
 void loadProgramHeader(ELF_PROGRAM_HEADER *pHeader, void *file, uint32_t vaddr, uint32_t filesz, uint32_t offset);
+
+int execv(void *elfHeader);
